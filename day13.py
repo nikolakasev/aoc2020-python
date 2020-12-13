@@ -26,17 +26,17 @@ def g(t):
     return t*13
 
 
-def find_start_cycle(f, g, delta):
-    t = 0
-    t2 = 0
+def find_cycle(f, g, t, t2, delta):
+
     start_of_cycle = False
 
+    i = t + 1
     while True:
-        tortoise = f(t)
+        tortoise = f(i)
 
-        t2 = 0
+        j = t2
         while True:
-            hare = g(t2)
+            hare = g(j)
 
             if hare == (tortoise + delta):
                 start_of_cycle = True
@@ -44,14 +44,34 @@ def find_start_cycle(f, g, delta):
             elif hare > (tortoise + delta):
                 break
             else:
-                t2 += 1
+                j += 1
 
         if start_of_cycle:
             break
         else:
-            t += 1
+            i += 1
 
-    return(t, t2)
+    return(i, j)
 
 
-print(find_start_cycle(f, g, 1))
+print(find_cycle(f, g, -1, 0, 2))
+print(find_cycle(f, g, 6, 8, 2))
+print(find_cycle(f, g, 19, 25, 2))
+
+
+@lru_cache(maxsize=None)
+def acc(t):
+    return t*(25 - 8)*13 + 8 * 13
+
+
+@lru_cache(maxsize=None)
+def z(t):
+    return t*19
+
+
+print(acc(2))
+
+print(find_cycle(acc, z, -1, 0, 1))
+
+offset = 3
+print(z(180) - offset)
