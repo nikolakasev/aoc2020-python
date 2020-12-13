@@ -16,14 +16,14 @@ pairs = list(sorted(zip(gaps, departures)))
 print(int(pairs[0][0]) * int(pairs[0][1]))
 
 
-# @lru_cache(maxsize=None)
-# def f(t):
-#     return t*17
+@lru_cache(maxsize=None)
+def f(t):
+    return t*17
 
 
-# @lru_cache(maxsize=None)
-# def g(t):
-#     return t*13
+@lru_cache(maxsize=None)
+def g(t):
+    return t*13
 
 
 def find_cycle(f, g, t, t2, delta):
@@ -33,45 +33,54 @@ def find_cycle(f, g, t, t2, delta):
     while True:
         tortoise = f(i)
 
-        j = t2
-        while True:
-            hare = g(j)
-
-            if hare == (tortoise + delta):
-                start_of_cycle = True
-                break
-            elif hare > (tortoise + delta):
-                break
-            else:
-                j += 1
-
-        if start_of_cycle:
+        mul, rest = divmod(tortoise + delta, g(1))
+        if rest == 0:
+            start_of_cycle = True
             break
         else:
             i += 1
 
-    return(i, j)
+        # j = t2
+        # while True:
+        #     hare = g(j)
+
+        #     if hare == (tortoise + delta):
+        #         start_of_cycle = True
+        #         break
+        #     elif hare > (tortoise + delta):
+        #         break
+        #     else:
+        #         j += 1
+
+        # if start_of_cycle:
+        #     break
+        # else:
+        #     i += 1
+
+    return(i, mul)
 
 
-# print(find_cycle(f, g, -1, 0, 2))
-# print(find_cycle(f, g, 6, 8, 2))
+print(find_cycle(f, g, -1, 0, 2))
+print(find_cycle(f, g, 6, 8, 2))
 
 
-# @lru_cache(maxsize=None)
-# def acc(t):
-#     return t*(25 - 8)*13 + 8 * 13
+@lru_cache(maxsize=None)
+def acc(t):
+    return t*(25 - 8)*13 + 8 * 13
 
 
-# @lru_cache(maxsize=None)
-# def z(t):
-#     return t*19
+@lru_cache(maxsize=None)
+def z(t):
+    return t*19
 
 
-# print("acc", acc(1))
+print(acc(1), acc(2), acc(3), acc(4), acc(5))
+print(z(1), z(2), z(3), z(4), z(5))
 
 
-# print(find_cycle(acc, z, -1, 0, 1))
-# print(find_cycle(acc, z, 15, 180, 1))
+print(find_cycle(acc, z, -1, 0, 1))
+print(find_cycle(acc, z, 15, 180, 1))
+print(find_cycle(acc, z, 34, 401, 1))
 
 # offset = 3
 # print(z(180) - offset)
@@ -97,11 +106,10 @@ for bus in busses[1:]:
         _id = int(bus)
         def m(t, _id=_id): return t*_id
 
-        print(f"to find cycle {n(1)}")
+        print(f"to find cycle {n(1)} and m {m(1)}")
         t1, t2 = find_cycle(n, m, -1, 0, offset)
         t3, t4 = find_cycle(n, m, t1, t2, offset)
 
-        @lru_cache(maxsize=None)
         def b(t, t2=t2, t4=t4, _id=_id): return t * (t4 - t2) * _id + \
             (0 if first_pair else t2 * _id)
 
@@ -110,5 +118,3 @@ for bus in busses[1:]:
         n = b
 
         print(f"{(t1, t2, t3, t4)}")
-
-        print(f"returns {n(1)}")
