@@ -23,15 +23,12 @@ def g(t):
 
 
 def find_cycle(f, g, t, t2, delta):
-    start_of_cycle = False
-
     i = t + 1
     while True:
         tortoise = f(i)
 
         mul, rest = divmod(tortoise + delta, g(1))
         if rest == 0:
-            start_of_cycle = True
             break
         else:
             i += 1
