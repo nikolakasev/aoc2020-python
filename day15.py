@@ -1,4 +1,8 @@
-input = [0, 3, 6]
+import sys
+sys.setrecursionlimit(2025)
+
+# input = [0, 3, 6]
+input = [6, 4, 12, 1, 20, 0, 16]
 
 memory = dict()
 
@@ -8,7 +12,6 @@ for i in range(len(input)):
 
 
 def remember(memory, number, turn):
-    print(f"to remember {number} on turn {turn}")
     if number in memory.keys():
         history = memory[number]
         if type(history) is tuple:
@@ -23,13 +26,10 @@ def say(memory, turn, last_number_spoken, target):
     history = memory[last_number_spoken]
 
     if type(history) is tuple:
-        print(f"{history} for {last_number_spoken} is a tuple")
         speak = history[1] - history[0]
     elif type(history) is int:
-        print(f"{history} for {last_number_spoken} is an int")
         speak = 0
     else:
-        print(f"{history} no, NEW {last_number_spoken}")
         speak = last_number_spoken
 
     remember(memory, speak, turn)
@@ -40,5 +40,5 @@ def say(memory, turn, last_number_spoken, target):
         return say(memory, turn + 1, speak, target)
 
 
-print(say(memory, len(memory) + 1, 6, 2020), memory)
+print(say(memory, len(memory) + 1, 16, 2020))
 # print(8 in memory.keys())
