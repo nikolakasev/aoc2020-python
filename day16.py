@@ -1,11 +1,11 @@
-
 import re
+import math
 
 range_pattern = r"(\w+\s?\w+):\s(\d+)-(\d+)\sor\s(\d+)-(\d+)"
 range_reg = re.compile(range_pattern)
 
 a = []
-for line in open('s.txt').read().split('\n\n'):
+for line in open('day16.txt').read().split('\n\n'):
     a.append(line)
 
 valid_ranges = []
@@ -41,38 +41,45 @@ for ticket in a[2].split("\n"):
 
 
 print(invalid)
-print(valid_tickets)
-print(valid_ranges)
-
-# # for each field position
-# for i in range(len(valid_tickets[0])):
-#     # # for each ticket
-#     # for t in valid_tickets:
-#     #     # must fit exactly one field range
-#     #     if all(()):
-#     #         print(f"match found for {i}")
-#     for r in range(len(ranges) // 2):
-#         for t in valid_tickets:
-#             # print(f"looking at {t[i]}")
-#             if (t[i] >= ranges[r*2][0] and t[i] <= ranges[r*2][1]) \
-#                     or (t[i] >= ranges[r*2 + 1][0] and t[i] <= ranges[r*2 + 1][1]):
-#                 print(f"matched pos {i} for range {r}")
-#         # if all((True for t in valid_tickets if (t[i] >= ranges[r*2][0] and t[i] <= ranges[r*2][1])
-#         #         or (t[i] >= ranges[r*2 + 1][0] and t[i] <= ranges[r*2 + 1][1]))):
-#         #     print(
-#         #         f"match found for {i} in range {ranges[r*2]}, {ranges[r*2 + 1]}")
 
 
 def positions_to_ranges(tickets, positions, ranges, range_indexes):
-    return ((i, r) for i in positions for r in range_indexes
+    # match positions to ranges such that
+    return ((f, r) for f in positions for r in range_indexes
+            # for all tickets
             if len(tickets) == sum(1 for t in tickets
-                                   if (t[i] >= ranges[r*2][0] and t[i] <= ranges[r*2][1])
-                                   or (t[i] >= ranges[r*2 + 1][0] and t[i] <= ranges[r*2 + 1][1])))
+                                   # the value on a given position is in one of the two ranges
+                                   if (t[f] >= ranges[r*2][0] and t[f] <= ranges[r*2][1])
+                                   or (t[f] >= ranges[r*2 + 1][0] and t[f] <= ranges[r*2 + 1][1])))
 
 
-print(list(positions_to_ranges(valid_tickets, range(
-    len(valid_tickets[0])), valid_ranges, range(len(valid_ranges) // 2))))
+# each ticket has the same amount of fields, so take it from the first one
+positions_left = set(range(len(valid_tickets[0])))
+# ranges come in pairs, for example: 'class: 0-1 or 4-19' is (0, 1), (4, 19)
+ranges_left = set(range(len(valid_ranges) // 2))
 
-index_ranges = range(len(valid_ranges) // 2)
+matches = set(positions_to_ranges(
+    valid_tickets, positions_left, valid_ranges, ranges_left))
 
-print(list(index_ranges))
+
+def unique_positions(matches, positions_left, ranges_left):
+    while len(ranges_left) > 0:
+        exact = list(r for r in ranges_left if sum(
+            1 for m in matches if m[1] == r and m[0] in positions_left) == 1)
+
+        exact_pairs = list(
+            filter(lambda m: m[1] in exact and m[0] in positions_left, matches))
+
+        positions_left = positions_left - set(map(lambda p: p[0], exact_pairs))
+        ranges_left = ranges_left - set(exact)
+
+        for p in exact_pairs:
+            yield p[1], p[0]
+
+
+# field -> position in the ticket
+positions = dict(unique_positions(matches, positions_left, ranges_left))
+
+# the fields that start with the word 'departure' are the first six fields in the ticket
+# for my ticket, multiply the values from the positions of those fields
+print(math.prod(valid_tickets[0][positions[f]] for f in range(6)))
