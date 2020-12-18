@@ -15,7 +15,8 @@ def evaluate(expression):
     expression = expression.split(" ")
 
     for i in range(len(expression)):
-        # assume always positive integers
+        # it must be an operand
+        # note: assume all numbers in the expression are positive
         if expression[i].isdigit():
             operand = int(expression[i])
             if symbol == '*':
@@ -23,6 +24,7 @@ def evaluate(expression):
             else:
                 result = result + operand
         else:
+            # it's not a number, so it must be either a '+' or a '*' symbol
             symbol = expression[i]
 
     return result
@@ -32,6 +34,8 @@ def evaluate_plus_precedence(expression):
     while True:
         # evaluate pairs with '+' first
         if '+' in expression:
+            # note: search() instead of match()
+            # because the latter matches from the beginning of the string
             match = re.search(plus_recedence, expression)
             expr_with_plus = match.groups()[0]
             expression = re.sub(plus_recedence,
@@ -43,21 +47,23 @@ def evaluate_plus_precedence(expression):
 
 
 def reduce(string, f=evaluate):
-    # loop until all inner expressions containing brackets are evaluated
+    # loop until all nested expressions are replaced with their corresponding evaluated values
     while '(' in string:
         # find the first inner most brackets
         match = re.search(inner_brackets, string)
         if match:
             expr_in_brackets = match.groups()[0]
-            # replace once
+            # there could be multiple matches, so evaluate and replace once
             string = re.sub(inner_brackets,
                             str(f(expr_in_brackets)), string, count=1)
         else:
             break
 
+    # the string contains no more nested expressions, evaluate one last time
     return f(string)
 
 
 # for each line, evaluate and sum all values
+# note: assume all expressions are gramatically correct
 print(sum(map(reduce, a)))
 print(sum(map(lambda e: reduce(e, f=evaluate_plus_precedence), a)))
