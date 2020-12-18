@@ -54,7 +54,9 @@ max_z = 1
 min_w = 0
 max_w = 1
 
+# keep track of active cubes only
 space = input
+
 for c in range(6):
     # very naive, expand the boundaries on each cycle
     # it would be more efficient to expand the boundary only when one or more cubes are activated
@@ -71,4 +73,5 @@ for c in range(6):
 
     space = cycle(space, (min_x, max_x), (min_y, max_y),
                   (min_z, max_z), (min_w, max_w))
-    print(f"{len(space)} cubes in cycle {c}")
+
+    print(f"{len(space)} cubes in cycle {c + 1}")
