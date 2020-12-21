@@ -6,42 +6,69 @@ for line in open('s.txt').read().split('\n\n'):
     a.append(line)
 
 
-def tile_from_string(string):
-    s = string.split('\n')
-    up = s[1]
-    down = s[10]
+def rotate_90_clockwise(tile):
+    # rotate 90 degrees, 180 is then x2, 270 is x3
+    return list(map(lambda a: "".join(a), zip(*tile[::-1])))
+
+
+def print_tile(tile):
+    for i in tile:
+        print(i)
+
+
+def flip_down(tile):
+    return tile[::-1]
+
+
+def borders(tile):
+    # extract the borders of a tile
+    item_length = len(tile[0])
+
+    up = tile[0]
+    down = tile[-1]
     left = ""
     right = ""
 
-    for i in range(1, 11):
-        left = s[i][0] + left
-        right = right + s[i][9]
+    for i in range(0, len(tile)):
+        left = tile[i][0] + left
+        right = right + tile[i][item_length - 1]
 
-    return (int(s[0][5:9]), [
-        # tile borders
-        up, down, left, right,
-        # transformed counterparts
-        up[::-1], down[::-1], left[::-1], right[::-1]
-    ])
+    return [up, down, left, right]
 
 
-all_tiles = list(map(tile_from_string, a))
+def contents(tile):
+    # extract the contents of a tile without the borders
+    c = []
+    item_length = len(tile[0])
+
+    for i in range(1, len(tile) - 1):
+        c.append(tile[i][1:item_length-1])
+
+    return c
+
+
+def tiles_and_borders(string):
+    s = string.split('\n')
+
+    return (
+        int(s[0][5:9]), borders(s[1:11]) +
+        list(map(lambda b: b[::-1], borders(s[1:11])))
+    )
+
+
+tiles = list(map(tiles_and_borders, a))
 
 # a corner tile always has two of it's borders not connected
 # find all tiles which still have 4 borders left (two original + two transformed) when substracting all other known borders
-corner_tiles = list(t[0] for t in all_tiles if len(
-    set(t[1]) - set(itertools.chain(*[r[1] for r in all_tiles if t[0] != r[0]]))) == 4)
+corner_tiles = list(t[0] for t in tiles if len(
+    set(t[1]) - set(itertools.chain(*[r[1] for r in tiles if t[0] != r[0]]))) == 4)
 
-print(corner_tiles)
-
+print(corner_tiles, prod(corner_tiles))
 
 pieces_per_row = int(sqrt(len(a)))
 
-# rotate 90 degrees, 180 is then x2, 270 is x3
-# flip down
-# extract borders from tile
-# extract the contents of a tile without the borders
-# for a tile, return operation, borders and contents without the borders - lru_cache it
+
+# for a tile, return operation, borders and contents without the borders - lru_cache it, 8 distinct contents per tile, unique borders must be 8 in total
 # O[\.#]{5}O[\.#]{4}OO[\.#]{4}OO[\.#]{4}OOO[\.#]{5}O[\.#]{2}O[\.#]{2}O[\.#]{2}O[\.#]{2}O[\.#]{2}O
 # search for monster with r'#[\.#]{5}#[\.#]{4}##[\.#]{4}##[\.#]{4}###[\.#]{5}#[\.#]{2}#[\.#]{2}#[\.#]{2}#[\.#]{2}#[\.#]{2}#'
 
@@ -51,4 +78,4 @@ pieces_per_row = int(sqrt(len(a)))
 # finish when all 144 are connected
 
 # turn the array into a single image
-# rotate and flip until one or more regex matches are found, count the total amount of # and substract monsters*15
+# rotate and flip, turn into a single string until one or more regex matches are found, count the total amount of # and substract monsters*15
