@@ -1,10 +1,10 @@
 
 from math import prod, sqrt
 import itertools
-from functools import lru_cache
+import re
 
 a = []
-for line in open('s.txt').read().split('\n\n'):
+for line in open('day20.txt').read().split('\n\n'):
     a.append(line)
 
 
@@ -102,7 +102,6 @@ print(corner_tiles, prod(corner_tiles))
 pieces_per_row = int(sqrt(len(a)))
 
 tiles = list(map(tiles_content, a))
-# print(tiles)
 
 tile_id = corner_tiles[0]
 top_left_tile = list(t[1] for t in tiles if t[0] == tile_id)[0]
@@ -116,43 +115,58 @@ top_left_tile = list(t for t in transformations(top_left_tile) if set([t[1][1], 
 right = top_left_tile[1][3]
 bottom = top_left_tile[1][1]
 
-print(top_left_tile, bottom, right)
-
 puzzle = []
 connected = set()
 
 for y in range(pieces_per_row):
     for x in range(pieces_per_row):
         if x == 0 and y == 0:
-            # puzzle.append(contents(top_left_tile[0]))
-            puzzle.append(top_left_tile[0])
+            puzzle.append(contents(top_left_tile[0]))
             connected.add(tile_id)
         elif x == 0:
             # left most piece of the puzzle on a new row
             next, id = list((t, o[0]) for o in tiles for t in transformations(o[1])
                             # will connect with it's upper border
                             if (o[0] not in connected) and t[1][0] == bottom)[0]
-            print(f"next {id}: {next}")
             right = next[1][3]
             bottom = next[1][1]
-            # puzzle.append(contents(next[0]))
-            puzzle.append(next[0])
+            puzzle.append(contents(next[0]))
             connected.add(id)
         else:
             # find the next available piece on the right
             next, id = list((t, o[0]) for o in tiles for t in transformations(o[1])
                             # with it's left border connecting
                             if (o[0] not in connected) and t[1][2] == right)[0]
-            print(f"next {id}: {next}")
             right = next[1][3]
-            # puzzle.append(contents(next[0]))
-            puzzle.append(next[0])
+            puzzle.append(contents(next[0]))
             connected.add(id)
 
-print(puzzle)
 
-# O[\.#]{5}O[\.#]{4}OO[\.#]{4}OO[\.#]{4}OOO[\.#]{5}O[\.#]{2}O[\.#]{2}O[\.#]{2}O[\.#]{2}O[\.#]{2}O
-# search for monster with r'#[\.#]{5}#[\.#]{4}##[\.#]{4}##[\.#]{4}###[\.#]{5}#[\.#]{2}#[\.#]{2}#[\.#]{2}#[\.#]{2}#[\.#]{2}#'
+def final(puzzle):
+    # turn the array into a single image
+    for i in map(lambda row_tuple: itertools.chain(*[row_tuple]),
+                 zip(*[puzzle[i::pieces_per_row] for i in range(pieces_per_row)])):
+        yield list(map(lambda r: "".join(r), zip(*i)))
 
-# turn the array into a single image
-# rotate and flip, turn into a single string until one or more regex matches are found, count the total amount of # and substract monsters*15
+
+image = list(itertools.chain(*final(puzzle)))
+
+# this is the pattern for the example
+# sea_monster = r'#[\.#]{5}#[\.#]{4}##[\.#]{4}##[\.#]{4}###[\.#]{5}#[\.#]{2}#[\.#]{2}#[\.#]{2}#[\.#]{2}#[\.#]{2}#'
+sea_monster = r'(?=(#[\.#]{77}#[\.#]{4}##[\.#]{4}##[\.#]{4}###[\.#]{77}#[\.#]{2}#[\.#]{2}#[\.#]{2}#[\.#]{2}#[\.#]{2}#))'
+
+
+def count_waves(string):
+    return sum(1 for pixel in string if pixel == '#')
+
+
+# rotate and flip to make sure the image is oriented correctly
+for t in transformations(image):
+    transformed = "".join(t[0])
+    # note: the trick here is the use of a capturing group inside a lookahead
+    # this makes sure that overlapping sea monsters can be detected as well
+    found = re.findall(sea_monster, transformed)
+    if found:
+        # count the waves that are not part of one or more sea monsters which cause 15 waves each
+        print(count_waves(transformed) - len(found)*15)
+        break
