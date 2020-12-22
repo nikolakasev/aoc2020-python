@@ -97,6 +97,7 @@ tiles_with_borders = list(map(tiles_borders_only, a))
 corner_tiles = list(t[0] for t in tiles_with_borders if len(
     set(t[1]) - set(itertools.chain(*[r[1] for r in tiles_with_borders if t[0] != r[0]]))) == 4)
 
+# star one
 print(corner_tiles, prod(corner_tiles))
 
 pieces_per_row = int(sqrt(len(a)))
