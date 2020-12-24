@@ -1,182 +1,116 @@
 import itertools
 
 a = []
-for line in open('s.txt').read().split('\n'):
+for line in open('day24.txt').read().split('\n'):
     a.append(line)
 
-print(a)
 
-
-def opposite(direction):
-    if direction == 'e':
-        return 'w'
-    elif direction == 'w':
-        return 'e'
-    elif direction == 'sw':
-        return 'ne'
-    elif direction == 'se':
-        return 'nw'
-    elif direction == 'nw':
-        return 'se'
-    elif direction == 'ne':
-        return 'sw'
-
-
-def find_neighbour(tree, tile, direction):
-    if tile in tree and direction in tree[tile][1]:
-        return tree[tile][1][direction]
-
-
-def add_neighbour(tree, tile, direction, neighbour):
-    neighbours = tree[tile][1]
-    neighbours[direction] = neighbour
-    tree[tile] = (tree[tile][0], neighbours)
-
-    return neighbour
-
-
-def add_tile(tree, tile):
-    tree[tile] = (False, dict())
-    return tile
-
-
-def flip_tile(tree, tile):
-    print(f"flipped {tile} from {tree[tile][0]} to {not tree[tile][0]}")
-    tree[tile] = (not tree[tile][0], tree[tile][1])
-    return tile
-
-
-def next_tile_num(tree):
-    all_tiles = set(itertools.chain(*[v[1].values() for v in tree.values()]))
-
-    return max([1] if all_tiles == set() else all_tiles) + 1
-
-
-all_directions = set(['e', 'w', 'ne', 'se', 'nw', 'sw'])
-
-
-def add_neighbours(tree, tile):
-    print(f"to add {all_directions - set(tree[tile][1].keys())} to {tile}")
-    for d in sorted(all_directions - set(tree[tile][1].keys())):
-        neighbour = next_tile_num(tree)
-        print(f"added {neighbour} on {d} to {tile}")
-        add_tile(tree, neighbour)
-        add_neighbour(tree, tile, d, neighbour)
-        add_neighbour(tree, neighbour, opposite(d), tile)
-
-    fully_link_neighbours(tree, tile)
-
-
-def fully_link_neighbours(tree, tile):
-    neighbours = tree[tile][1]
-
-    for d, n in neighbours.items():
-        if d == 'e':
-            add_neighbour(tree, n, 'nw', neighbours['ne'])
-            add_neighbour(tree, n, 'sw', neighbours['se'])
-        elif d == 'w':
-            add_neighbour(tree, n, 'ne', neighbours['nw'])
-            add_neighbour(tree, n, 'se', neighbours['sw'])
-        elif d == 'ne':
-            add_neighbour(tree, n, 'se', neighbours['e'])
-            add_neighbour(tree, n, 'w', neighbours['nw'])
-        elif d == 'nw':
-            add_neighbour(tree, n, 'sw', neighbours['w'])
-            add_neighbour(tree, n, 'e', neighbours['ne'])
-        elif d == 'sw':
-            add_neighbour(tree, n, 'nw', neighbours['w'])
-            add_neighbour(tree, n, 'e', neighbours['se'])
-        elif d == 'se':
-            add_neighbour(tree, n, 'ne', neighbours['e'])
-            add_neighbour(tree, n, 'w', neighbours['sw'])
-
-
-def build_tree(input):
-    tree = dict()
-    tile = 1
-    neighbour = None
-    direction = None
-
-    add_tile(tree, tile)
-    add_neighbours(tree, tile)
+def lay_tiles(input):
+    # the coordinate system is inspired (proudly copied) from https://www.redblobgames.com/grids/hexagons/
+    # see the "double-width" horizontal layout that doubles the column values
+    mozaic = dict()
 
     for line in input:
-        directions = []
-        i = 0
         # every line starts from the same reference tile
-        tile = 1
+        row = 0
+        column = 0
+
+        i = 0
         while i < len(line):
             if line[i] == 'e':
-                direction = 'e'
-                # print(f"{direction}")
+                row += 2
             elif line[i] == 'w':
-                direction = 'w'
-                # print(f"{direction}")
+                row -= 2
             elif line[i] == 's' and line[i + 1] == 'e':
+                row += 1
+                column += 1
                 i += 1
-                direction = 'se'
-                # print(f"{direction}")
             elif line[i] == 's' and line[i + 1] == 'w':
+                row -= 1
+                column += 1
                 i += 1
-                direction = 'sw'
-                # print(f"{direction}")
             elif line[i] == 'n' and line[i + 1] == 'e':
+                row += 1
+                column -= 1
                 i += 1
-                direction = 'ne'
-                # print(f"{direction}")
-            elif line[i] == 'n' and line[i + 1] == 'w':
-                i += 1
-                direction = 'nw'
             else:
-                print(f"don't know!")
-                # print(f"{direction}")
-
-            neighbour = find_neighbour(tree, tile, direction)
-            add_neighbours(tree, neighbour)
-
-            print(f"moved from {tile} to {neighbour}")
-            tile = neighbour
+                row -= 1
+                column -= 1
+                i += 1
 
             i += 1
-            directions.append(direction)
 
-        flip_tile(tree, tile)
-        print(f"{line} {directions} {tree}")
+        if (row, column) in mozaic.keys():
+            # flip to the other side
+            mozaic[(row, column)] = not mozaic[(row, column)]
+        else:
+            # flip to black
+            mozaic[(row, column)] = True
 
-    return tree
-
-
-tree = build_tree(a)
-print(tree)
-print(sum(1 for _, v in tree.items() if v[0]))
-print(next_tile_num(tree))
-# # neighbours = [('ne', 2), ('w', 3)]
-# neighbours = []
-# sample = dict()
-# # sample[1] = (False, dict((k, v) for k, v in neighbours))
+    return mozaic
 
 
-# add_tile(sample, 1)
-# add_neighbours(sample, 1)
-# # fully_link_neighbours(sample, 1)
+# star one
+tile_floor = lay_tiles(a)
+# how many tiles are still black?
+print(sum(1 for _, v in tile_floor.items() if v))
 
-# print(sample)
+
+def adjacent_tiles(tile):
+    row = tile[0]
+    column = tile[1]
+
+    return [
+        # east, west
+        (row + 2, column), (row - 2, column),
+        # se, sw
+        (row + 1, column + 1), (row - 1, column + 1),
+        # ne, nw
+        (row + 1, column - 1), (row - 1, column - 1)]
 
 
-# print(max(set(itertools.chain(*[v[1].values() for v in sample.values()]))) + 1)
-#
-# print(sample)
-# print(next_tile_num(sample))
+def exhibit(mozaic, for_days):
+    # due to the "double-width" nature of the coordinate system:
+    # make sure to start with the adjacent tiles of the currently known ones
+    min_row = min(t[0] for t in mozaic) - 2
+    min_col = min(t[1] for t in mozaic) - 2
+    max_row = max(t[0] for t in mozaic) + 2
+    max_col = max(t[1] for t in mozaic) + 2
 
-# print(sample)
+    for _ in range(for_days):
+        new = set()
+        for row in range(min_row, max_row):
+            for column in range(min_col, max_col):
+                tile = (row, column)
 
-# print(find_neighbour(sample, 1, 'ne'))
+                adjacent_black_tiles = sum(1 for a in adjacent_tiles(
+                    tile) if a in mozaic)
 
-# print(add_neighbour(sample, 0, 'sw', 4))
-# print(sample)
+                # any black tile
+                if tile in mozaic:
+                    # with zero or more than two black tiles immediately adjacent to it is flipped to white
+                    if adjacent_black_tiles == 0 or adjacent_black_tiles > 2:
+                        pass
+                    else:
+                        # stays black
+                        new.add(tile)
+                # any white tile
+                else:
+                    # with exactly two black tiles adjacent to it
+                    if adjacent_black_tiles == 2:
+                        # is flipped to black
+                        new.add(tile)
 
-# flip_tile(sample, 0)
+        # resize again accordingly
+        min_row = min(t[0] for t in new) - 2
+        min_col = min(t[1] for t in new) - 2
+        max_row = max(t[0] for t in new) + 2
+        max_col = max(t[1] for t in new) + 2
 
-# print(sample)
+        mozaic = new.copy()
 
-# print(next_tile_num(sample))
+    return mozaic
+
+
+# star two
+print(len(exhibit(set(k for k, v in tile_floor.items() if v), 100)))
