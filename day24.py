@@ -1,3 +1,5 @@
+import itertools
+
 a = []
 for line in open('s.txt').read().split('\n'):
     a.append(line)
@@ -34,57 +36,59 @@ def add_neighbour(tree, tile, direction, neighbour):
 
 
 def add_tile(tree, tile):
-    tree[tile] = (True, dict())
+    tree[tile] = (False, dict())
     return tile
 
 
 def flip_tile(tree, tile):
+    print(f"flipped {tile} from {tree[tile][0]} to {not tree[tile][0]}")
     tree[tile] = (not tree[tile][0], tree[tile][1])
     return tile
 
 
-# def get_tile_color(tree, tile):
-#     return tree[tile][0]
-
-
 def next_tile_num(tree):
-    return max(tree.keys()) + 1
+    all_tiles = set(itertools.chain(*[v[1].values() for v in tree.values()]))
+
+    return max([1] if all_tiles == set() else all_tiles) + 1
 
 
 all_directions = set(['e', 'w', 'ne', 'se', 'nw', 'sw'])
 
 
 def add_neighbours(tree, tile):
-    neighbour = next_tile_num(tree)
-    for d in all_directions - set(tree[tile][1].keys()):
+    print(f"to add {all_directions - set(tree[tile][1].keys())} to {tile}")
+    for d in sorted(all_directions - set(tree[tile][1].keys())):
+        neighbour = next_tile_num(tree)
+        print(f"added {neighbour} on {d} to {tile}")
         add_tile(tree, neighbour)
         add_neighbour(tree, tile, d, neighbour)
         add_neighbour(tree, neighbour, opposite(d), tile)
-        neighbour += 1
+
     fully_link_neighbours(tree, tile)
 
 
 def fully_link_neighbours(tree, tile):
-    print(f"{tree[tile][1]}")
-    for d, n in tree[tile][1].items():
+    neighbours = tree[tile][1]
+
+    for d, n in neighbours.items():
         if d == 'e':
-            add_neighbour(tree, n, 'nw', tree[tile][1]['ne'])
-            add_neighbour(tree, n, 'sw', tree[tile][1]['se'])
+            add_neighbour(tree, n, 'nw', neighbours['ne'])
+            add_neighbour(tree, n, 'sw', neighbours['se'])
         elif d == 'w':
-            add_neighbour(tree, n, 'ne', tree[tile][1]['nw'])
-            add_neighbour(tree, n, 'se', tree[tile][1]['sw'])
+            add_neighbour(tree, n, 'ne', neighbours['nw'])
+            add_neighbour(tree, n, 'se', neighbours['sw'])
         elif d == 'ne':
-            add_neighbour(tree, n, 'se', tree[tile][1]['e'])
-            add_neighbour(tree, n, 'w', tree[tile][1]['nw'])
+            add_neighbour(tree, n, 'se', neighbours['e'])
+            add_neighbour(tree, n, 'w', neighbours['nw'])
         elif d == 'nw':
-            add_neighbour(tree, n, 'sw', tree[tile][1]['w'])
-            add_neighbour(tree, n, 'e', tree[tile][1]['ne'])
+            add_neighbour(tree, n, 'sw', neighbours['w'])
+            add_neighbour(tree, n, 'e', neighbours['ne'])
         elif d == 'sw':
-            add_neighbour(tree, n, 'nw', tree[tile][1]['w'])
-            add_neighbour(tree, n, 'e', tree[tile][1]['se'])
+            add_neighbour(tree, n, 'nw', neighbours['w'])
+            add_neighbour(tree, n, 'e', neighbours['se'])
         elif d == 'se':
-            add_neighbour(tree, n, 'ne', tree[tile][1]['e'])
-            add_neighbour(tree, n, 'w', tree[tile][1]['sw'])
+            add_neighbour(tree, n, 'ne', neighbours['e'])
+            add_neighbour(tree, n, 'w', neighbours['sw'])
 
 
 def build_tree(input):
@@ -94,58 +98,79 @@ def build_tree(input):
     direction = None
 
     add_tile(tree, tile)
+    add_neighbours(tree, tile)
 
     for line in input:
+        directions = []
         i = 0
+        # every line starts from the same reference tile
+        tile = 1
         while i < len(line):
             if line[i] == 'e':
                 direction = 'e'
+                # print(f"{direction}")
             elif line[i] == 'w':
                 direction = 'w'
+                # print(f"{direction}")
             elif line[i] == 's' and line[i + 1] == 'e':
                 i += 1
                 direction = 'se'
+                # print(f"{direction}")
             elif line[i] == 's' and line[i + 1] == 'w':
                 i += 1
                 direction = 'sw'
+                # print(f"{direction}")
             elif line[i] == 'n' and line[i + 1] == 'e':
                 i += 1
                 direction = 'ne'
-            else:
+                # print(f"{direction}")
+            elif line[i] == 'n' and line[i + 1] == 'w':
                 i += 1
                 direction = 'nw'
+            else:
+                print(f"don't know!")
+                # print(f"{direction}")
 
             neighbour = find_neighbour(tree, tile, direction)
-            if not neighbour:
-                neighbour = next_tile_num(tree)
-                add_tile(tree, neighbour)
+            add_neighbours(tree, neighbour)
 
-            add_neighbour(tree, tile, direction, neighbour)
-            add_neighbour(tree, neighbour, opposite(direction), tile)
-
+            print(f"moved from {tile} to {neighbour}")
             tile = neighbour
 
             i += 1
+            directions.append(direction)
 
-        flip_tile(tree, neighbour)
+        flip_tile(tree, tile)
+        print(f"{line} {directions} {tree}")
 
     return tree
 
 
-# print(build_tree(a))
+tree = build_tree(a)
+print(tree)
+print(sum(1 for _, v in tree.items() if v[0]))
+print(next_tile_num(tree))
+# # neighbours = [('ne', 2), ('w', 3)]
+# neighbours = []
+# sample = dict()
+# # sample[1] = (False, dict((k, v) for k, v in neighbours))
 
-# neighbours = [('ne', 2), ('w', 3)]
-neighbours = []
-sample = dict()
-sample[1] = (True, dict((k, v) for k, v in neighbours))
 
-add_neighbours(sample, 1)
-
-print(sample)
+# add_tile(sample, 1)
+# add_neighbours(sample, 1)
+# # fully_link_neighbours(sample, 1)
 
 # print(sample)
 
-# print(find_neighbour(sample, 0, 'ne'))
+
+# print(max(set(itertools.chain(*[v[1].values() for v in sample.values()]))) + 1)
+#
+# print(sample)
+# print(next_tile_num(sample))
+
+# print(sample)
+
+# print(find_neighbour(sample, 1, 'ne'))
 
 # print(add_neighbour(sample, 0, 'sw', 4))
 # print(sample)
